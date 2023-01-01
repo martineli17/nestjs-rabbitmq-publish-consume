@@ -48,3 +48,5 @@ this._channelConsumer.consume(queue, (message) => {
 
 ## Classe de serviço de abstração
 A classe [RabbitMqService](https://github.com/martineli17/nestjs-rabbitmq-publish-consume/blob/master/src/services/rabbitmq.service.ts) é resposável por conter métodos que abstraem o funcionamento do pacote 'amqplib' para cada uma das funções necessárias.
+</br>
+Esta classe tem o seu scope, referente a Dependency Injection, como Singleton a fim de evitar a criação de múltiplas conexões e canais com o servidor do RabbitMq.
