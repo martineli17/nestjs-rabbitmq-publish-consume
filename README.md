@@ -1,73 +1,52 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# Utilizando o RabbitMq no NestJS
+Este repositório tem como objetivo exemplificar, de maneira simples, um serviço que abstrai a utilização do RabbitMq, promovendo o gerenciamento de filas, exchanges, publicações e consumo de mensagens
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Installation
-
-```bash
-$ npm install
+## Pacotes a serem instalados
+O único pacote necessário a ser instalado é o [amqpli](https://amqp-node.github.io/amqplib/channel_api.html), que é o responsável por fornecer uma insterface de comunicação com o servidor do RabbitMq</p>
+Este pacote contém alguns métodos importantes (e que foram utilizados neste exemplo). São eles:
+-  connect: Método responsável por criar uma conexão com o servidor
+```js
+import { connect } from "amqplib";
+await connect(URL_DO_SERVIDOR);
+```
+-  createChannel: Método responsável por criar um canal de conexão
+```js
+await this._connection.createChannel();
+```
+-  assertQueue: Método responsável por criar e retornar informações sobre uma determinada fila
+```js
+await this._channel.assertQueue(name);
 ```
 
-## Running the app
-
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+-  assertExchange: Método responsável por criar e retornar informações sobre uma determinada exchange
+```js
+await this._channel.assertExchange(name);
 ```
 
-## Test
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+-  bindQueue: Método responsável por definir a relação entre uma exchange e uma fila
+```js
+await this._channel.bindQueue(queue, exchange, routingKey);
 ```
 
-## Support
+-  publish: Método responsável por publicar uma nova mensagem na exchange e assim distribuir para as filas
+```js
+const contentJson = JSON.stringify(content);
+this._channel.publish(exchange, routingKey, Buffer.from(contentJson));
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+-  consume: Método responsável por registrar um handler a ser executado quando uma determinada fila receber uma nova mensagem
+```js
+this._channelConsumer.consume(queue, (message) => {
+ try {
+   console.log(message.content.toString());
+   this._channelConsumer.ack(message);
+  } catch {
+    this._channelConsumer.nack(message);
+  }
+});
+```
 
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
+## Classe de serviço de abstração
+A classe [RabbitMqService](https://github.com/martineli17/nestjs-rabbitmq-publish-consume/blob/master/src/services/rabbitmq.service.ts) é resposável por conter métodos que abstraem o funcionamento do pacote 'amqplib' para cada uma das funções necessárias.
+</br>
+Esta classe tem o seu scope, referente a Dependency Injection, como Singleton a fim de evitar a criação de múltiplas conexões e canais com o servidor do RabbitMq.
