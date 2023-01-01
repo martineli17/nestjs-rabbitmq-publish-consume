@@ -34,7 +34,7 @@ export class RabbitMqService implements IRabbitMqService {
     exchange: string,
     routingKey: string
   ): Promise<void> {
-    this._channel.bindQueue(queue, exchange, routingKey);
+    await this._channel.bindQueue(queue, exchange, routingKey);
   }
 
   async publishToQueueAsync<TContent>(
